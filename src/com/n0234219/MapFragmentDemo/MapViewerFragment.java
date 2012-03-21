@@ -57,8 +57,8 @@ public class MapViewerFragment extends LocalActivityManagerFragment {
 	    
 		public void updateMapPosition(String latitude, String longitude) {
 			
-			float lat = convertToDegree(latitude);
-			float lng = convertToDegree(longitude);
+			double lat = Double.valueOf(latitude);
+			double lng = Double.valueOf(longitude);
 			
 			GeoPoint p = new GeoPoint((int) (lat * 1E6), (int) (lng * 1E6));
 			MapController mc = mapView.getController();
