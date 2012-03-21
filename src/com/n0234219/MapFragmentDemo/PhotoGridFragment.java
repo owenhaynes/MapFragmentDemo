@@ -1,5 +1,7 @@
 package com.n0234219.MapFragmentDemo;
 
+import java.io.IOException;
+
 import android.app.Fragment;
 import android.app.ListFragment;
 import android.app.LoaderManager;
@@ -7,6 +9,8 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -41,9 +45,9 @@ public class PhotoGridFragment extends Fragment implements LoaderManager.LoaderC
 	
 	// Loader manager methods
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-		String[] projection = { MediaStore.Images.Thumbnails._ID, MediaStore.Images.Thumbnails.DATA };
+		String[] projection = { MediaStore.Images.Thumbnails._ID };
 		CursorLoader cursorLoader = new CursorLoader(getActivity(),
-				MediaStore.Images.Media.EXTERNAL_CONTENT_URI, projection,
+				MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI, projection,
 				null, null, null);
 		return cursorLoader;
 	}
@@ -55,6 +59,14 @@ public class PhotoGridFragment extends Fragment implements LoaderManager.LoaderC
 
 	public void onLoaderReset(Loader<Cursor> cursor) {
 		adapter.swapCursor(null);
+	}
+	
+	
+	public void explainCursor(Cursor c) {
+		CharSequence info = "COLUMNS: " + c.getColumnCount() + " ROWS: " + c.getCount();
+		Toast toast = Toast.makeText(getActivity().getApplicationContext(), info, 5000);
+		toast.show();
+		
 	}
 	
 	private class ImageCursorAdapter extends CursorAdapter {
@@ -70,15 +82,25 @@ public class PhotoGridFragment extends Fragment implements LoaderManager.LoaderC
 
 		@Override
 		public void bindView(View view, Context context, Cursor cursor) {
+			Bitmap bitmap;
+			Bitmap newBitmap;
 			ImageView newView = (ImageView) view.findViewById(R.layout.grid_item);
-			CharSequence info = "COLUMNS: " + cursor.getColumnCount() + " ROWS: " + cursor.getCount();
-			Toast toast = Toast.makeText(context, info, Toast.LENGTH_LONG);
-			toast.show();
-			String imagePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Thumbnails._ID));
-			if (imagePath != null && imagePath.length() != 0 && newView != null) {
-	            newView.setVisibility(ImageView.VISIBLE);
-	            newView.setImageURI(Uri.withAppendedPath(MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI, "" + cursor.getPosition()));
-			}
+			int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Thumbnails._ID);
+			int imageID = cursor.getInt(columnIndex);
+			Uri uri = Uri.withAppendedPath(MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI, "" + imageID);
+			 try {
+                 bitmap = BitmapFactory.decodeStream(getActivity().getContentResolver().openInputStream(uri));
+                 if (bitmap != null) {
+                     newBitmap = Bitmap.createScaledBitmap(bitmap, 70, 70, true);
+                     newView.setImageBitmap(newBitmap);
+                     newView.setVisibility(ImageView.VISIBLE);
+                     bitmap.recycle();
+                 }
+			 } catch (IOException e) {
+				 //shit
+			 }
+			
+			
 		}
 
 		@Override
